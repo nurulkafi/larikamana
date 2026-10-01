@@ -17,7 +17,7 @@ export async function searchLocation(query: string): Promise<SearchResult[]> {
     const response = await fetch(url, {
       headers: {
         'Accept-Language': 'id,en',
-        'User-Agent': 'RunKeun-Running-Route-Planner/1.0',
+        'User-Agent': 'LariKamana-Running-Route-Planner/1.0',
       },
     });
 

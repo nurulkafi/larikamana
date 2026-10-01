@@ -115,7 +115,7 @@ export default function RouteMetricsPanel({
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-              RunKeun Planner
+              Lari Kamana?
             </span>
           </div>
 

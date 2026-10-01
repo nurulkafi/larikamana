@@ -38,7 +38,7 @@ export function generateGPX(
   });
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="RunKeun - https://runkeun.local"
+<gpx version="1.1" creator="Lari Kamana - https://larikamana.local"
   xmlns="http://www.topografix.com/GPX/1/1"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">

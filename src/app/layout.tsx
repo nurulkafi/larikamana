@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'RunKeun - Buat Rute Lari & Ekspor GPX Gratis',
+  title: 'Lari Kamana?',
   description:
-    'Aplikasi web gratis untuk merencanakan rute lari, menghitung jarak real-time, estimasi pace & kalori, profil elevasi, serta ekspor file GPX untuk Garmin dan Strava.',
+    'Aplikasi web gratis untuk merencanakan rute lari, menghitung jarak real-time, estimasi pace, profil elevasi, serta ekspor file GPX untuk Garmin dan Strava.',
 };
 
 export default function RootLayout({
