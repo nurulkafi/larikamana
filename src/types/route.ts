@@ -43,3 +43,13 @@ export interface TileLayerConfig {
   attribution: string;
   maxZoom?: number;
 }
+
+export interface MapTargetLocation {
+  lat: number;
+  lng: number;
+  zoom?: number;
+  bbox?: [number, number, number, number]; // [south, north, west, east]
+  label?: string;
+  timestamp: number;
+}
+

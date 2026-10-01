@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import React from 'react';
-import { Waypoint, TileLayerId } from '@/types/route';
+import { Waypoint, TileLayerId, MapTargetLocation } from '@/types/route';
 
 interface MapWrapperProps {
   waypoints: Waypoint[];
@@ -11,7 +11,7 @@ interface MapWrapperProps {
   onUpdateWaypoint: (id: string, lat: number, lng: number) => void;
   onRemoveWaypoint: (id: string) => void;
   onCloseLoop?: () => void;
-  centerLocation: [number, number] | null;
+  targetLocation: MapTargetLocation | null;
   fitBoundsTrigger: number;
   activeLayer: TileLayerId;
 }

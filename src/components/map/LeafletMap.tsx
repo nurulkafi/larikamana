@@ -14,7 +14,7 @@ import {
 import { Flag } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Waypoint, TileLayerId } from '@/types/route';
+import { Waypoint, TileLayerId, MapTargetLocation } from '@/types/route';
 import { MAP_LAYERS } from '@/constants/map';
 
 // Create custom SVG markers using L.divIcon
@@ -118,20 +118,41 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
   return null;
 }
 
-// Map center controller when user searches or requests GPS
+// Map center & zoom controller when user searches or requests GPS
 function MapCenterController({
-  center,
-  zoom,
+  target,
 }: {
-  center: [number, number] | null;
-  zoom?: number;
+  target: MapTargetLocation | null;
 }) {
   const map = useMap();
   useEffect(() => {
-    if (center) {
-      map.flyTo(center, zoom || 15, { duration: 1.2 });
+    if (!target) return;
+
+    // If bounding box is available from search, fit tightly to that area
+    if (target.bbox && target.bbox.length === 4) {
+      const [south, north, west, east] = target.bbox;
+      const latDiff = Math.abs(north - south);
+      const lngDiff = Math.abs(east - west);
+
+      if (latDiff > 0.0001 && lngDiff > 0.0001) {
+        const bounds = L.latLngBounds([south, west], [north, east]);
+        map.fitBounds(bounds, {
+          padding: [50, 50],
+          maxZoom: 17,
+          animate: true,
+          duration: 1.2,
+        });
+        return;
+      }
     }
-  }, [center, zoom, map]);
+
+    // Default to close-up zoom 16/17 (track & street level)
+    const zoomLevel = target.zoom || 16;
+    map.flyTo([target.lat, target.lng], zoomLevel, {
+      duration: 1.2,
+      animate: true,
+    });
+  }, [target, map]);
   return null;
 }
 
@@ -160,7 +181,7 @@ interface LeafletMapProps {
   onUpdateWaypoint: (id: string, lat: number, lng: number) => void;
   onRemoveWaypoint: (id: string) => void;
   onCloseLoop?: () => void;
-  centerLocation: [number, number] | null;
+  targetLocation: MapTargetLocation | null;
   fitBoundsTrigger: number;
   activeLayer: TileLayerId;
 }
@@ -172,7 +193,7 @@ export default function LeafletMap({
   onUpdateWaypoint,
   onRemoveWaypoint,
   onCloseLoop,
-  centerLocation,
+  targetLocation,
   fitBoundsTrigger,
   activeLayer,
 }: LeafletMapProps) {
@@ -197,7 +218,7 @@ export default function LeafletMap({
         />
 
         <MapClickHandler onMapClick={onAddWaypoint} />
-        <MapCenterController center={centerLocation} />
+        <MapCenterController target={targetLocation} />
         <FitBoundsController coordinates={coordinates} fitTrigger={fitBoundsTrigger} />
 
         {/* Outer glow polyline for shadow/contrast */}
@@ -284,6 +305,27 @@ export default function LeafletMap({
             </Marker>
           );
         })}
+
+        {/* Search Target Highlight Indicator */}
+        {targetLocation && (
+          <Marker
+            position={[targetLocation.lat, targetLocation.lng]}
+            interactive={false}
+            icon={L.divIcon({
+              className: 'search-target-pulse-marker',
+              html: `
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: none;">
+                  <div style="background: #059669; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.25); white-space: nowrap; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                    <span>📍 ${targetLocation.label || 'Lokasi Terpilih'}</span>
+                  </div>
+                  <div style="width: 14px; height: 14px; background: #10B981; border: 3px solid #FFFFFF; border-radius: 50%; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.4);"></div>
+                </div>
+              `,
+              iconSize: [0, 0],
+              iconAnchor: [0, 0],
+            })}
+          />
+        )}
       </MapContainer>
     </div>
   );

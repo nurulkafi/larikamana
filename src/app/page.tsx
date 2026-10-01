@@ -8,14 +8,14 @@ import TopSearchBar from '@/components/panels/TopSearchBar';
 import RouteMetricsPanel from '@/components/panels/RouteMetricsPanel';
 import ExportModal from '@/components/panels/ExportModal';
 import SavedRoutesModal from '@/components/panels/SavedRoutesModal';
-import { TileLayerId } from '@/types/route';
+import { TileLayerId, MapTargetLocation } from '@/types/route';
 import { ChevronUp, ChevronDown, Sparkles, MapPin } from 'lucide-react';
 
 const POPULAR_SPOTS = [
-  { name: 'GBK Senayan, Jakarta', lat: -6.2185, lng: 106.8026 },
-  { name: 'Monas, Jakarta', lat: -6.1754, lng: 106.8272 },
-  { name: 'Gasibu / Gedung Sate, Bandung', lat: -6.9003, lng: 107.6186 },
-  { name: 'Lapangan Renon, Bali', lat: -8.6705, lng: 115.2341 },
+  { name: 'GBK Senayan, Jakarta', lat: -6.2185, lng: 106.8026, zoom: 17 },
+  { name: 'Monas, Jakarta', lat: -6.1754, lng: 106.8272, zoom: 16 },
+  { name: 'Gasibu / Gedung Sate, Bandung', lat: -6.9003, lng: 107.6186, zoom: 17 },
+  { name: 'Lapangan Renon, Bali', lat: -8.6705, lng: 115.2341, zoom: 17 },
 ];
 
 export default function Home() {
@@ -51,7 +51,7 @@ export default function Home() {
   } = useRouteState();
 
   const [activeLayer, setActiveLayer] = useState<TileLayerId>('google_streets');
-  const [centerLocation, setCenterLocation] = useState<[number, number] | null>(null);
+  const [targetLocation, setTargetLocation] = useState<MapTargetLocation | null>(null);
   const [fitBoundsTrigger, setFitBoundsTrigger] = useState<number>(0);
 
   // Modals state
@@ -92,8 +92,21 @@ export default function Home() {
     }
   };
 
-  const handleSelectLocation = (lat: number, lng: number) => {
-    setCenterLocation([lat, lng]);
+  const handleSelectLocation = (
+    lat: number,
+    lng: number,
+    label?: string,
+    bbox?: [number, number, number, number],
+    zoom?: number
+  ) => {
+    setTargetLocation({
+      lat,
+      lng,
+      label,
+      bbox,
+      zoom: zoom || 16,
+      timestamp: Date.now(),
+    });
   };
 
   const handleLoadRouteFromModal = (route: any) => {
@@ -148,7 +161,7 @@ export default function Home() {
           onUpdateWaypoint={updateWaypoint}
           onRemoveWaypoint={removeWaypoint}
           onCloseLoop={closeLoop}
-          centerLocation={centerLocation}
+          targetLocation={targetLocation}
           fitBoundsTrigger={fitBoundsTrigger}
           activeLayer={activeLayer}
         />
@@ -162,7 +175,7 @@ export default function Home() {
           {POPULAR_SPOTS.map((spot) => (
             <button
               key={spot.name}
-              onClick={() => handleSelectLocation(spot.lat, spot.lng)}
+              onClick={() => handleSelectLocation(spot.lat, spot.lng, spot.name.split(',')[0], undefined, spot.zoom || 17)}
               className="px-2.5 py-1 text-xs bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 rounded-lg transition font-medium cursor-pointer border border-transparent hover:border-emerald-200"
             >
               {spot.name.split(',')[0]}

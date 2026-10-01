@@ -1,13 +1,19 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Navigation, Layers, Check, Loader2 } from 'lucide-react';
+import { Search, MapPin, Navigation, Layers, Check, Loader2, X } from 'lucide-react';
 import { searchLocation, SearchResult } from '@/services/nominatim';
 import { TileLayerId } from '@/types/route';
 import { MAP_LAYERS } from '@/constants/map';
 
 interface TopSearchBarProps {
-  onSelectLocation: (lat: number, lng: number) => void;
+  onSelectLocation: (
+    lat: number,
+    lng: number,
+    label?: string,
+    bbox?: [number, number, number, number],
+    zoom?: number
+  ) => void;
   activeLayer: TileLayerId;
   onChangeLayer: (layer: TileLayerId) => void;
 }
@@ -60,6 +66,32 @@ export default function TopSearchBar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleSelectResult = (item: SearchResult) => {
+    const cleanLabel = item.displayName.split(',')[0];
+    onSelectLocation(item.lat, item.lng, cleanLabel, item.bbox, 16);
+    setIsOpen(false);
+    setQuery(cleanLabel);
+  };
+
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (results.length > 0) {
+        handleSelectResult(results[0]);
+      } else if (query.trim().length >= 2) {
+        setIsSearching(true);
+        const res = await searchLocation(query);
+        setIsSearching(false);
+        if (res.length > 0) {
+          setResults(res);
+          handleSelectResult(res[0]);
+        }
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+    }
+  };
+
   // HTML5 Geolocation
   const handleCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -71,7 +103,7 @@ export default function TopSearchBar({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setIsLocating(false);
-        onSelectLocation(pos.coords.latitude, pos.coords.longitude);
+        onSelectLocation(pos.coords.latitude, pos.coords.longitude, 'Lokasi Saya', undefined, 17);
       },
       (err) => {
         setIsLocating(false);
@@ -94,11 +126,24 @@ export default function TopSearchBar({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
             onFocus={() => results.length > 0 && setIsOpen(true)}
             placeholder="Cari lokasi lari (mis: GBK, Monas, Gasibu)..."
             className="w-full bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
           />
-          {isSearching && <Loader2 className="w-4 h-4 text-emerald-600 animate-spin shrink-0" />}
+          {isSearching && <Loader2 className="w-4 h-4 text-emerald-600 animate-spin shrink-0 ml-1" />}
+          {query && !isSearching && (
+            <button
+              onClick={() => {
+                setQuery('');
+                setResults([]);
+                setIsOpen(false);
+              }}
+              className="p-0.5 text-slate-400 hover:text-slate-600 rounded-full transition ml-1"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         {/* Dropdown Suggestions */}
@@ -107,11 +152,7 @@ export default function TopSearchBar({
             {results.map((item) => (
               <button
                 key={item.placeId}
-                onClick={() => {
-                  onSelectLocation(item.lat, item.lng);
-                  setIsOpen(false);
-                  setQuery(item.displayName.split(',')[0]);
-                }}
+                onClick={() => handleSelectResult(item)}
                 className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-start gap-2.5 transition text-xs border-b border-slate-100 last:border-0 cursor-pointer"
               >
                 <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
