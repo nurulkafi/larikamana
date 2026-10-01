@@ -16,12 +16,14 @@ interface TopSearchBarProps {
   ) => void;
   activeLayer: TileLayerId;
   onChangeLayer: (layer: TileLayerId) => void;
+  mapCenter?: [number, number];
 }
 
 export default function TopSearchBar({
   onSelectLocation,
   activeLayer,
   onChangeLayer,
+  mapCenter,
 }: TopSearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -46,7 +48,7 @@ export default function TopSearchBar({
     let isMounted = true;
     const timer = setTimeout(async () => {
       setIsSearching(true);
-      const res = await searchLocation(query);
+      const res = await searchLocation(query, mapCenter?.[0], mapCenter?.[1]);
       if (isMounted) {
         setResults(res);
         setIsSearching(false);

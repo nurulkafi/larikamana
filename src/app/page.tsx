@@ -152,6 +152,7 @@ export default function Home() {
           onSelectLocation={handleSelectLocation}
           activeLayer={activeLayer}
           onChangeLayer={setActiveLayer}
+          mapCenter={targetLocation ? [targetLocation.lat, targetLocation.lng] : [-6.2185, 106.8026]}
         />
 
         <MapWrapper
