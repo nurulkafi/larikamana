@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Navigation, Layers, Check, Loader2, X } from 'lucide-react';
+import { Search, MapPin, Navigation, Layers, Check, Loader2, X, Info } from 'lucide-react';
 import { searchLocation, SearchResult } from '@/services/nominatim';
 import { TileLayerId } from '@/types/route';
 import { MAP_LAYERS } from '@/constants/map';
@@ -28,10 +28,12 @@ export default function TopSearchBar({
   const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const layerMenuRef = useRef<HTMLDivElement>(null);
+  const infoMenuRef = useRef<HTMLDivElement>(null);
 
   // Debounced search
   useEffect(() => {
@@ -60,6 +62,9 @@ export default function TopSearchBar({
       }
       if (layerMenuRef.current && !layerMenuRef.current.contains(event.target as Node)) {
         setIsLayerMenuOpen(false);
+      }
+      if (infoMenuRef.current && !infoMenuRef.current.contains(event.target as Node)) {
+        setIsInfoOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -208,6 +213,55 @@ export default function TopSearchBar({
                   {activeLayer === key && <Check className="w-4 h-4 text-emerald-600" />}
                 </button>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Information & Guide Button */}
+        <div ref={infoMenuRef} className="relative">
+          <button
+            onClick={() => setIsInfoOpen(!isInfoOpen)}
+            title="Informasi & Cara Mulai"
+            className={`p-2.5 bg-white/95 backdrop-blur-md hover:bg-slate-50 rounded-xl shadow-md border border-slate-200/80 transition cursor-pointer flex items-center justify-center ${
+              isInfoOpen ? 'text-emerald-600 border-emerald-300 ring-2 ring-emerald-500/20' : 'text-slate-700 hover:text-emerald-600'
+            }`}
+          >
+            <Info className="w-5 h-5" />
+          </button>
+
+          {isInfoOpen && (
+            <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-4 z-50 text-slate-700">
+              <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800 uppercase tracking-wider">
+                  <span className="text-base">💡</span>
+                  <span>Cara Mulai</span>
+                </div>
+                <button
+                  onClick={() => setIsInfoOpen(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="p-2.5 bg-emerald-50/80 border border-emerald-200/70 rounded-xl">
+                  <p className="text-emerald-900 text-[11px] leading-relaxed">
+                    Klik pada peta untuk menentukan titik awal (Start), lalu klik titik-titik berikutnya untuk membentuk rute lari Anda. Titik dapat digeser kapan saja.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5 text-[11px] text-slate-600 pt-1">
+                  <div className="flex items-start gap-1.5">
+                    <span className="font-semibold text-slate-800 shrink-0">🏁 Finish Loop:</span>
+                    <span>Klik titik Start hijau lalu pilih Finish untuk menutup rute.</span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className="font-semibold text-slate-800 shrink-0">↩️ Undo / Redo:</span>
+                    <span>Gunakan tombol Undo/Redo di panel atau pintasan <b>Ctrl + Z</b>.</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

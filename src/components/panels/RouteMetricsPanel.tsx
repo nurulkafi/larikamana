@@ -299,16 +299,6 @@ export default function RouteMetricsPanel({
           elevationLoss={metrics.elevationLoss}
           isLoading={isLoadingElevation}
         />
-
-        {/* Helpful Tip when empty */}
-        {waypointsCount === 0 && (
-          <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs text-emerald-800 flex flex-col gap-1">
-            <span className="font-semibold">💡 Cara Mulai:</span>
-            <p className="text-slate-600 text-[11px]">
-              Klik pada peta untuk menentukan titik awal (Start), lalu klik titik-titik berikutnya untuk membentuk rute lari Anda. Titik dapat digeser kapan saja.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Footer Action Buttons */}
