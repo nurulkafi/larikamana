@@ -37,30 +37,44 @@ export default function TopSearchBar({
   const layerMenuRef = useRef<HTMLDivElement>(null);
   const infoMenuRef = useRef<HTMLDivElement>(null);
 
-  // Debounced search with race condition prevention
+  // Debounced search with AbortController & fast parallel response
   useEffect(() => {
-    if (!query || query.trim().length < 2) {
+    const clean = query.trim();
+    if (clean.length < 3) {
       setResults([]);
       setIsOpen(false);
+      setIsSearching(false);
       return;
     }
 
-    let isMounted = true;
+    const abortController = new AbortController();
+    setIsSearching(true);
+
     const timer = setTimeout(async () => {
-      setIsSearching(true);
-      const res = await searchLocation(query, mapCenter?.[0], mapCenter?.[1]);
-      if (isMounted) {
-        setResults(res);
-        setIsSearching(false);
-        setIsOpen(res.length > 0);
+      try {
+        const res = await searchLocation(
+          clean,
+          mapCenter?.[0],
+          mapCenter?.[1],
+          abortController.signal
+        );
+        if (!abortController.signal.aborted) {
+          setResults(res);
+          setIsSearching(false);
+          setIsOpen(res.length > 0);
+        }
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          setIsSearching(false);
+        }
       }
-    }, 300);
+    }, 250);
 
     return () => {
-      isMounted = false;
       clearTimeout(timer);
+      abortController.abort();
     };
-  }, [query]);
+  }, [query, mapCenter]);
 
   // Click outside to close
   useEffect(() => {
@@ -93,7 +107,7 @@ export default function TopSearchBar({
         handleSelectResult(results[0]);
       } else if (query.trim().length >= 2) {
         setIsSearching(true);
-        const res = await searchLocation(query);
+        const res = await searchLocation(query.trim(), mapCenter?.[0], mapCenter?.[1]);
         setIsSearching(false);
         if (res.length > 0) {
           setResults(res);
