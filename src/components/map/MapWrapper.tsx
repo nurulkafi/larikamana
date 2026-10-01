@@ -12,6 +12,7 @@ interface MapWrapperProps {
   onRemoveWaypoint: (id: string) => void;
   onCloseLoop?: () => void;
   targetLocation: MapTargetLocation | null;
+  onClearTargetLocation?: () => void;
   fitBoundsTrigger: number;
   activeLayer: TileLayerId;
 }

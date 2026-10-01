@@ -35,23 +35,29 @@ export default function TopSearchBar({
   const layerMenuRef = useRef<HTMLDivElement>(null);
   const infoMenuRef = useRef<HTMLDivElement>(null);
 
-  // Debounced search
+  // Debounced search with race condition prevention
   useEffect(() => {
-    if (!query || query.trim().length < 3) {
+    if (!query || query.trim().length < 2) {
       setResults([]);
       setIsOpen(false);
       return;
     }
 
+    let isMounted = true;
     const timer = setTimeout(async () => {
       setIsSearching(true);
       const res = await searchLocation(query);
-      setResults(res);
-      setIsSearching(false);
-      setIsOpen(true);
-    }, 400);
+      if (isMounted) {
+        setResults(res);
+        setIsSearching(false);
+        setIsOpen(res.length > 0);
+      }
+    }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   // Click outside to close
@@ -72,8 +78,8 @@ export default function TopSearchBar({
   }, []);
 
   const handleSelectResult = (item: SearchResult) => {
-    const cleanLabel = item.displayName.split(',')[0];
-    onSelectLocation(item.lat, item.lng, cleanLabel, item.bbox, 16);
+    const cleanLabel = item.displayName.split(',')[0].trim();
+    onSelectLocation(item.lat, item.lng, cleanLabel, undefined, 16.5);
     setIsOpen(false);
     setQuery(cleanLabel);
   };
@@ -153,17 +159,28 @@ export default function TopSearchBar({
 
         {/* Dropdown Suggestions */}
         {isOpen && results.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 py-1 max-h-72 overflow-y-auto z-50">
-            {results.map((item) => (
-              <button
-                key={item.placeId}
-                onClick={() => handleSelectResult(item)}
-                className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-start gap-2.5 transition text-xs border-b border-slate-100 last:border-0 cursor-pointer"
-              >
-                <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span className="text-slate-700 line-clamp-2">{item.displayName}</span>
-              </button>
-            ))}
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 py-1 max-h-72 overflow-y-auto z-50 divide-y divide-slate-100">
+            {results.map((item) => {
+              const parts = item.displayName.split(',');
+              const title = parts[0]?.trim();
+              const subtitle = parts.slice(1).join(',').trim();
+
+              return (
+                <button
+                  key={item.placeId}
+                  onClick={() => handleSelectResult(item)}
+                  className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/80 flex items-start gap-2.5 transition text-xs cursor-pointer group"
+                >
+                  <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-slate-800 truncate">{title}</p>
+                    {subtitle && (
+                      <p className="text-[11px] text-slate-400 truncate">{subtitle}</p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

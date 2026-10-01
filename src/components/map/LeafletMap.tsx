@@ -109,9 +109,16 @@ const createCustomMarker = (
 };
 
 // Map click handler to add new waypoint
-function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
+function MapClickHandler({
+  onMapClick,
+  onClearTarget,
+}: {
+  onMapClick: (lat: number, lng: number) => void;
+  onClearTarget?: () => void;
+}) {
   useMapEvents({
     click(e) {
+      if (onClearTarget) onClearTarget();
       onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });
@@ -128,26 +135,8 @@ function MapCenterController({
   useEffect(() => {
     if (!target) return;
 
-    // If bounding box is available from search, fit tightly to that area
-    if (target.bbox && target.bbox.length === 4) {
-      const [south, north, west, east] = target.bbox;
-      const latDiff = Math.abs(north - south);
-      const lngDiff = Math.abs(east - west);
-
-      if (latDiff > 0.0001 && lngDiff > 0.0001) {
-        const bounds = L.latLngBounds([south, west], [north, east]);
-        map.fitBounds(bounds, {
-          padding: [50, 50],
-          maxZoom: 17,
-          animate: true,
-          duration: 1.2,
-        });
-        return;
-      }
-    }
-
-    // Default to close-up zoom 16/17 (track & street level)
-    const zoomLevel = target.zoom || 16;
+    // Zoom directly to street/neighborhood level (zoom 16.5 or custom zoom)
+    const zoomLevel = target.zoom || 16.5;
     map.flyTo([target.lat, target.lng], zoomLevel, {
       duration: 1.2,
       animate: true,
@@ -182,6 +171,7 @@ interface LeafletMapProps {
   onRemoveWaypoint: (id: string) => void;
   onCloseLoop?: () => void;
   targetLocation: MapTargetLocation | null;
+  onClearTargetLocation?: () => void;
   fitBoundsTrigger: number;
   activeLayer: TileLayerId;
 }
@@ -194,6 +184,7 @@ export default function LeafletMap({
   onRemoveWaypoint,
   onCloseLoop,
   targetLocation,
+  onClearTargetLocation,
   fitBoundsTrigger,
   activeLayer,
 }: LeafletMapProps) {
@@ -217,7 +208,7 @@ export default function LeafletMap({
           maxZoom={selectedLayerConfig.maxZoom || 19}
         />
 
-        <MapClickHandler onMapClick={onAddWaypoint} />
+        <MapClickHandler onMapClick={onAddWaypoint} onClearTarget={onClearTargetLocation} />
         <MapCenterController target={targetLocation} />
         <FitBoundsController coordinates={coordinates} fitTrigger={fitBoundsTrigger} />
 
@@ -310,11 +301,10 @@ export default function LeafletMap({
         {targetLocation && (
           <Marker
             position={[targetLocation.lat, targetLocation.lng]}
-            interactive={false}
             icon={L.divIcon({
               className: 'search-target-pulse-marker',
               html: `
-                <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: none;">
+                <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); cursor: pointer;">
                   <div style="background: #059669; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.25); white-space: nowrap; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
                     <span>📍 ${targetLocation.label || 'Lokasi Terpilih'}</span>
                   </div>
@@ -324,7 +314,33 @@ export default function LeafletMap({
               iconSize: [0, 0],
               iconAnchor: [0, 0],
             })}
-          />
+          >
+            <Popup offset={[0, -26]}>
+              <div className="p-1 min-w-[170px] text-center">
+                <p className="font-bold text-xs text-slate-800 mb-1">{targetLocation.label || 'Lokasi Terpilih'}</p>
+                <p className="text-[11px] text-slate-500 mb-2">Mulai buat rute lari dari titik ini?</p>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => {
+                      onAddWaypoint(targetLocation.lat, targetLocation.lng);
+                      if (onClearTargetLocation) onClearTargetLocation();
+                    }}
+                    className="flex-1 py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm cursor-pointer"
+                  >
+                    Mulai Disini
+                  </button>
+                  {onClearTargetLocation && (
+                    <button
+                      onClick={() => onClearTargetLocation()}
+                      className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-medium transition cursor-pointer"
+                    >
+                      Tutup
+                    </button>
+                  )}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
         )}
       </MapContainer>
     </div>

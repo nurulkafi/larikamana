@@ -162,6 +162,7 @@ export default function Home() {
           onRemoveWaypoint={removeWaypoint}
           onCloseLoop={closeLoop}
           targetLocation={targetLocation}
+          onClearTargetLocation={() => setTargetLocation(null)}
           fitBoundsTrigger={fitBoundsTrigger}
           activeLayer={activeLayer}
         />
