@@ -9,7 +9,7 @@ import RouteMetricsPanel from '@/components/panels/RouteMetricsPanel';
 import ExportModal from '@/components/panels/ExportModal';
 import SavedRoutesModal from '@/components/panels/SavedRoutesModal';
 import { TileLayerId, MapTargetLocation } from '@/types/route';
-import { ChevronUp, ChevronDown, Sparkles, MapPin } from 'lucide-react';
+import { ChevronUp, ChevronDown, Sparkles, MapPin, Undo2, Redo2 } from 'lucide-react';
 
 const POPULAR_SPOTS = [
   { name: 'GBK Senayan, Jakarta', lat: -6.2185, lng: 106.8026, zoom: 17 },
@@ -57,7 +57,7 @@ export default function Home() {
   // Modals state
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
-  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(true);
+  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
 
   // Keyboard shortcuts (Ctrl+Z, Ctrl+Y)
   useEffect(() => {
@@ -190,24 +190,63 @@ export default function Home() {
           isMobilePanelOpen ? 'max-h-[80vh]' : 'max-h-20'
         } overflow-hidden flex flex-col`}
       >
-        {/* Drag / Toggle Header */}
-        <button
+        {/* Drag / Toggle Header with Direct Undo & Redo */}
+        <div
           onClick={() => setIsMobilePanelOpen(!isMobilePanelOpen)}
-          className="w-full py-2.5 px-4 flex items-center justify-between bg-slate-50/90 border-b border-slate-100 cursor-pointer text-xs font-bold text-slate-700"
+          className="w-full py-2 px-3.5 flex items-center justify-between bg-slate-50/95 backdrop-blur-md border-b border-slate-200/90 cursor-pointer select-none"
         >
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>{routeName}</span>
-            <span className="text-emerald-600 font-mono">
+          {/* Left: Route Name & Distance */}
+          <div className="flex items-center gap-2 min-w-0 pr-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+            <span className="text-xs font-bold text-slate-800 truncate max-w-[130px] sm:max-w-[180px]">
+              {routeName}
+            </span>
+            <span className="text-xs font-bold text-emerald-600 font-mono shrink-0">
               ({(metrics.distance / 1000).toFixed(2)} km)
             </span>
           </div>
-          {isMobilePanelOpen ? (
-            <ChevronDown className="w-5 h-5 text-slate-400" />
-          ) : (
-            <ChevronUp className="w-5 h-5 text-slate-400" />
-          )}
-        </button>
+
+          {/* Right: Quick Direct Undo, Redo, & Expand/Collapse Chevron */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                undo();
+              }}
+              disabled={!canUndo}
+              title="Undo titik terakhir"
+              aria-label="Undo titik terakhir"
+              className="w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-700 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
+            >
+              <Undo2 className="w-4 h-4 text-slate-700" />
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                redo();
+              }}
+              disabled={!canRedo}
+              title="Redo titik"
+              aria-label="Redo titik"
+              className="w-8 h-8 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-700 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
+            >
+              <Redo2 className="w-4 h-4 text-slate-700" />
+            </button>
+
+            <div className="w-px h-5 bg-slate-200 mx-0.5" />
+
+            <div className="p-1 text-slate-400 hover:text-slate-600 transition">
+              {isMobilePanelOpen ? (
+                <ChevronDown className="w-5 h-5 text-slate-500" />
+              ) : (
+                <ChevronUp className="w-5 h-5 text-slate-500" />
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Scrollable content when opened */}
         {isMobilePanelOpen && (
